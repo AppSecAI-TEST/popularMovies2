@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Popular Movies2</string>
+
+    <string name="poster_description">Movie Poster</string>
+    <string name="api_key">api_key</string>
+    <string name="api_key_value">7885f99b4a2725473842aadd8b475210</string>
+    <string name="fetching_movies">Fetching movies&#8230;</string>
+    <string name="movie_error_message">Some error occurred while fetching movies list. Please try again later</string>
+    <string name="trailer_error_message">Some error occurred while fetching the trailers. Please try again later</string>
+    <string name="no_internet">No internet connection available!</string>
+
+    <string name="popular">Popular</string>
+    <string name="top_rated">Top Rated</string>
+    <string name="favourites">My Favourites</string>
+
+    <string name="trailers">Trailers:</string>
+    <string name="reviews">Reviews</string>
+    <string name="average_vote">%1$s/10</string>
+    <string name="review_content">\"%1$s\"</string>
+    <string name="author_name">- %1$s</string>
+</resources>

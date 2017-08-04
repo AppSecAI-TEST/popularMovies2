@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="poster_width">120dp</dimen>
+    <dimen name="poster_height">150dp</dimen>
+    <dimen name="progress_dimension">42dp</dimen>
+    <dimen name="margin_left_detail">15dp</dimen>
+    <dimen name="margin10">10dp</dimen>
+    <dimen name="margin5">5dp</dimen>
+    <dimen name="grid_spacing">30dp</dimen>
+    <integer name="vertical_item_spacing">10</integer>
+    <integer name="grid_span">3</integer>
+    <dimen name="action_bar_height">56dp</dimen>
+
+    <dimen name="title_height">120dp</dimen>
+    <dimen name="video_icon">50dp</dimen>
+</resources>
