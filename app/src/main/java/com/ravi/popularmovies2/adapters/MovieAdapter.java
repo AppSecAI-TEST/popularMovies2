@@ -61,7 +61,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     public void onBindViewHolder(MovieViewHolder holder, final int position) {
         final int adapterPosition = holder.getAdapterPosition();
         Movies currentItem = movieList.get(position);
-        Glide.with(holder.context).load(currentItem.getPosterPath()).into(holder.moviePoster);
+        Glide.with(holder.context).load(currentItem.getPosterPath())
+                .placeholder(R.drawable.ic_movie_placeholder)
+                .error(R.drawable.ic_movie_placeholder)
+                .into(holder.moviePoster);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -141,20 +141,29 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         switch (id) {
             case R.id.action_popular:
                 url = Constants.POPULAR_URL;
+                initNetworkCall();
                 break;
 
             case R.id.action_topRated:
                 url = Constants.TOP_RATED_URL;
+                initNetworkCall();
                 break;
 
             case R.id.action_favourites:
                 break;
+
+            case android.R.id.home:
+                finish();
+                break;
         }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void initNetworkCall(){
         if (NetworkUtils.isInternetConnected(this)) {
             getSupportLoaderManager().restartLoader(MOVIES_LOADER_ID, null, this);
         } else {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
         }
-        return super.onOptionsItemSelected(item);
     }
 }

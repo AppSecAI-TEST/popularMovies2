@@ -30,7 +30,12 @@ import com.ravi.popularmovies2.utils.JsonKeys;
 import com.ravi.popularmovies2.utils.NetworkUtils;
 import com.ravi.popularmovies2.utils.OnItemClickHandler;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class MovieDetailActivity extends AppCompatActivity implements View.OnClickListener,
         OnItemClickHandler,
@@ -89,10 +94,25 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
         movieDetail = (Movies) getIntent().getSerializableExtra("detail");
         movieTitle.setText(movieDetail.getMovieName());
         averageVote.setText(getString(R.string.average_vote, String.valueOf(movieDetail.getVoteAverage())));
-        releaseYear.setText(movieDetail.getReleaseDate());
+
+        releaseYear.setText(getYearOfRelease());
         summary.setText(movieDetail.getSynopsis());
         favouritesIcon.setOnClickListener(this);
-        Glide.with(this).load(movieDetail.getPosterPath()).into(poster);
+        Glide.with(this).load(movieDetail.getPosterPath())
+                .placeholder(R.drawable.ic_movie_placeholder)
+                .error(R.drawable.ic_movie_placeholder)
+                .into(poster);
+    }
+
+    private String getYearOfRelease() {
+        try {
+            DateFormat df = new SimpleDateFormat("yyyy", Locale.US);
+            Date releaseDate = df.parse(movieDetail.getReleaseDate());
+            return df.format(releaseDate);
+        } catch (ParseException pEx) {
+            pEx.printStackTrace();
+        }
+        return "";
     }
 
     @Override
@@ -161,8 +181,14 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_reviews) {
-            startActivity(new Intent(this, ReviewsActivity.class).putExtra(JsonKeys.ID_KEY, movieDetail.getId()));
+        switch (item.getItemId()) {
+            case R.id.action_reviews:
+                startActivity(new Intent(this, ReviewsActivity.class).putExtra(JsonKeys.ID_KEY, movieDetail.getId()));
+                break;
+
+            case android.R.id.home:
+                finish();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
