@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
-public class GetTrailerLoader extends AsyncTaskLoader<ArrayList<Trailers>> {
+class GetTrailerLoader extends AsyncTaskLoader<ArrayList<Trailers>> {
 
     private String urlString;
 

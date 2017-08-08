@@ -15,7 +15,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ravi.popularmovies2.adapters.MovieAdapter;
 import com.ravi.popularmovies2.adapters.ReviewsAdapter;
 import com.ravi.popularmovies2.model.Reviews;
 import com.ravi.popularmovies2.utils.Constants;
@@ -76,7 +75,7 @@ public class ReviewsActivity extends AppCompatActivity implements LoaderManager.
                     .buildUpon()
                     .appendPath(String.valueOf(movieId))
                     .appendEncodedPath(Constants.REVIEWS_PATH)
-                    .appendQueryParameter(getString(R.string.api_key), getString(R.string.api_key_value))
+                    .appendQueryParameter(getString(R.string.api_key), Constants.API_KEY)
                     .build();
             return new GetReviewsLoader(this, builtUri.toString());
         } else {

@@ -27,6 +27,12 @@
         <activity
             android:name=".ReviewsActivity"
             android:label="@string/reviews" />
+
+        <provider
+            android:name="com.ravi.popularmovies2.database.FavoritesProvider"
+            android:authorities="com.ravi.popularmovies2"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

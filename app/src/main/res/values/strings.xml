@@ -3,11 +3,11 @@
 
     <string name="poster_description">Movie Poster</string>
     <string name="api_key">api_key</string>
-    <string name="api_key_value">7885f99b4a2725473842aadd8b475210</string>
     <string name="fetching_movies">Fetching movies&#8230;</string>
     <string name="movie_error_message">Some error occurred while fetching movies list. Please try again later</string>
     <string name="trailer_error_message">Some error occurred while fetching the trailers. Please try again later</string>
     <string name="no_internet">No internet connection available!</string>
+    <string name="no_favorites">You do not have any favorites at the moment!</string>
 
     <string name="popular">Popular</string>
     <string name="top_rated">Top Rated</string>

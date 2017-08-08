@@ -14,12 +14,12 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class GetReviewsLoader extends AsyncTaskLoader<ArrayList<Reviews>> {
+class GetReviewsLoader extends AsyncTaskLoader<ArrayList<Reviews>> {
 
     private String urlString;
     private ArrayList<Reviews> reviewsList;
 
-    public GetReviewsLoader(Context context, String urlString) {
+    GetReviewsLoader(Context context, String urlString) {
         super(context);
         this.urlString = urlString;
     }

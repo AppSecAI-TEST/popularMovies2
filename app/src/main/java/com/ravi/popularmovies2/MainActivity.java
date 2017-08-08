@@ -1,6 +1,7 @@
 package com.ravi.popularmovies2;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -17,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ravi.popularmovies2.adapters.FavoritesAdapter;
 import com.ravi.popularmovies2.adapters.MovieAdapter;
 import com.ravi.popularmovies2.model.Movies;
 import com.ravi.popularmovies2.utils.Constants;
@@ -26,14 +28,22 @@ import com.ravi.popularmovies2.utils.OnItemClickHandler;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements OnItemClickHandler, LoaderManager.LoaderCallbacks<ArrayList<Movies>> {
+public class MainActivity extends AppCompatActivity implements OnItemClickHandler {
 
     RecyclerView movieRecycler;
     ProgressBar progressBar;
     String url;
     private static final int MOVIES_LOADER_ID = 1;
+    private static final int FAVORITES_LOADER_ID = 2;
+
     MovieAdapter adapter;
+    FavoritesAdapter mAdapter;
+
     ArrayList<Movies> movieList;
+    boolean isCursorLoaded = false;
+
+    private LoaderManager.LoaderCallbacks<ArrayList<Movies>> moviesLoaderResultCallback;
+    private LoaderManager.LoaderCallbacks<Cursor> favoritesLoaderResultCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,17 +70,94 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         movieList = new ArrayList<>();
 
         if (savedInstanceState != null && savedInstanceState.containsKey("movies")) {
-            movieList = (ArrayList<Movies>) savedInstanceState.getSerializable("movies");
+            movieList =  savedInstanceState.getParcelableArrayList("movies");
         }
         adapter = new MovieAdapter(movieList, this);
         movieRecycler.setAdapter(adapter);
 
         url = Constants.POPULAR_URL;
-        if (NetworkUtils.isInternetConnected(this)) {
-            getSupportLoaderManager().initLoader(MOVIES_LOADER_ID, null, this);
-        } else {
+        initCallbacks();
+        if (NetworkUtils.isInternetConnected(this))
+            getSupportLoaderManager().initLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
+        else
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
-        }
+
+    }
+
+    private void initCallbacks() {
+        moviesLoaderResultCallback = new LoaderManager.LoaderCallbacks<ArrayList<Movies>>() {
+            @Override
+            public Loader<ArrayList<Movies>> onCreateLoader(int id, Bundle args) {
+                // if the cursor adapter has been set, change the adapter to arrayList adapter
+                if(isCursorLoaded) {
+                    movieRecycler.setAdapter(adapter);
+                    mAdapter.swapCursor(null);
+                }
+                progressBar.setVisibility(View.VISIBLE);
+                if (NetworkUtils.isInternetConnected(MainActivity.this)) {
+                    Uri builtUri = Uri.parse(url)
+                            .buildUpon()
+                            .appendQueryParameter(getString(R.string.api_key), Constants.API_KEY)
+                            .build();
+                    return new GetMoviesLoader(MainActivity.this, builtUri.toString());
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void onLoadFinished(Loader<ArrayList<Movies>> loader, ArrayList<Movies> data) {
+                progressBar.setVisibility(View.GONE);
+                // check for internet connection as I do not want the data to be removed
+                // when screen is rotated and the loader is called again
+                if (NetworkUtils.isInternetConnected(MainActivity.this)) {
+                    movieList.clear();
+                    movieList.addAll(data);
+                    adapter.notifyDataSetChanged();
+                    if (movieList == null) {
+                        Toast.makeText(MainActivity.this, getString(R.string.movie_error_message), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<ArrayList<Movies>> loader) {
+
+            }
+        };
+
+        favoritesLoaderResultCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+                progressBar.setVisibility(View.VISIBLE);
+                return new GetFavouritesLoader(MainActivity.this, null);
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+                progressBar.setVisibility(View.GONE);
+                if (data == null) {
+                    Toast.makeText(MainActivity.this, getString(R.string.no_favorites), Toast.LENGTH_SHORT).show();
+                } else {
+                    if (mAdapter == null) { // if adapter for favorites was not created before
+                        mAdapter = new FavoritesAdapter(MainActivity.this);
+                        movieRecycler.setAdapter(mAdapter);
+                        mAdapter.swapCursor(data);
+                    } else{
+                        // if adapter for favorites was created before change the adapter
+                        // to the cursorAdapter
+                        movieRecycler.setAdapter(mAdapter);
+                        mAdapter.swapCursor(data);
+                    }
+                    isCursorLoaded = true;
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+                mAdapter.swapCursor(null);
+            }
+        };
     }
 
     /**
@@ -82,48 +169,20 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         adapter.notifyDataSetChanged();
     }
 
-    @Override
-    public Loader<ArrayList<Movies>> onCreateLoader(int id, Bundle args) {
-        progressBar.setVisibility(View.VISIBLE);
-        if (NetworkUtils.isInternetConnected(this)) {
-            Uri builtUri = Uri.parse(url)
-                    .buildUpon()
-                    .appendQueryParameter(getString(R.string.api_key), getString(R.string.api_key_value))
-                    .build();
-            return new GetMoviesLoader(this, builtUri.toString());
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader<ArrayList<Movies>> loader, ArrayList<Movies> data) {
-        progressBar.setVisibility(View.GONE);
-        // check for internet connection as I do not want the data to be removed
-        // when screen is rotated and the loader is called again
-        if(NetworkUtils.isInternetConnected(this)){
-            movieList.clear();
-            movieList.addAll(data);
-            adapter.notifyDataSetChanged();
-            if (movieList == null) {
-                Toast.makeText(this, getString(R.string.movie_error_message), Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
+    /**
+     * This function is called when a grid item is clicked
+     * */
     @Override
     public void onClick(int position) {
         startActivity(new Intent(MainActivity.this, MovieDetailActivity.class).putExtra("detail", movieList.get(position)));
     }
 
     @Override
-    public void onLoaderReset(Loader<ArrayList<Movies>> loader) {
-
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putSerializable("movies", movieList);
+        // save instance only if the app is showing popular/top-rated list
+        if(!isCursorLoaded){
+            outState.putSerializable("movies", movieList);
+        }
         super.onSaveInstanceState(outState);
     }
 
@@ -141,15 +200,16 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         switch (id) {
             case R.id.action_popular:
                 url = Constants.POPULAR_URL;
-                initNetworkCall();
+                initNetworkCall(MOVIES_LOADER_ID);
                 break;
 
             case R.id.action_topRated:
                 url = Constants.TOP_RATED_URL;
-                initNetworkCall();
+                initNetworkCall(MOVIES_LOADER_ID);
                 break;
 
             case R.id.action_favourites:
+                initNetworkCall(FAVORITES_LOADER_ID);
                 break;
 
             case android.R.id.home:
@@ -159,9 +219,12 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         return super.onOptionsItemSelected(item);
     }
 
-    private void initNetworkCall(){
+    private void initNetworkCall(int id) {
         if (NetworkUtils.isInternetConnected(this)) {
-            getSupportLoaderManager().restartLoader(MOVIES_LOADER_ID, null, this);
+            if (id == MOVIES_LOADER_ID)
+                getSupportLoaderManager().restartLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
+            else
+                getSupportLoaderManager().restartLoader(FAVORITES_LOADER_ID, null, favoritesLoaderResultCallback);
         } else {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
         }

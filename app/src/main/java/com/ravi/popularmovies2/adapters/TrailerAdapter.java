@@ -2,7 +2,6 @@ package com.ravi.popularmovies2.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,7 +58,6 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
     public void onBindViewHolder(TrailerViewHolder holder, int position) {
         Trailers currentItem = trailerList.get(position);
         final int adapterPosition = holder.getAdapterPosition();
-        Log.v("TRAILER", currentItem.getName());
         holder.title.setText(currentItem.getName());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

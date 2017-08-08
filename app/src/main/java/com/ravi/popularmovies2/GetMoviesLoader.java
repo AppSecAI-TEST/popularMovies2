@@ -49,7 +49,6 @@ class GetMoviesLoader extends AsyncTaskLoader<ArrayList<Movies>> {
                 movieItem.setSynopsis(movieObject.getString(JsonKeys.OVERVIEW_KEY));
                 movieItem.setVoteAverage((float) movieObject.getDouble(JsonKeys.AVERAGE_VOTE_KEY));
                 movieItem.setPosterPath(movieObject.getString(JsonKeys.POSTER_PATH_KEY));
-                movieItem.setFavourite(false);
                 moviesData.add(movieItem);
             }
         } catch (IOException ioex) {

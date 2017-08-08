@@ -1,6 +1,8 @@
 package com.ravi.popularmovies2;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,7 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.ravi.popularmovies2.adapters.TrailerAdapter;
+import com.ravi.popularmovies2.database.FavoritesContract;
 import com.ravi.popularmovies2.model.Movies;
 import com.ravi.popularmovies2.model.Trailers;
 import com.ravi.popularmovies2.utils.Constants;
@@ -37,9 +39,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_ID;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_RATING;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_RELEASE_DATE;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_SYNOPSIS;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.COLUMN_TITLE;
+import static com.ravi.popularmovies2.database.FavoritesContract.FavoritesEntry.CONTENT_URI;
+
 public class MovieDetailActivity extends AppCompatActivity implements View.OnClickListener,
-        OnItemClickHandler,
-        LoaderManager.LoaderCallbacks<ArrayList<Trailers>> {
+        OnItemClickHandler {
 
     private ImageView poster, favouritesIcon;
     private TextView movieTitle, averageVote, releaseYear, summary;
@@ -52,6 +61,12 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
     private TrailerAdapter adapter;
 
     private static final int TRAILERS_LOADER_ID = 2;
+    private static final int CHECK_MOVIE_LOADER_ID = 3;
+
+    LoaderManager.LoaderCallbacks<ArrayList<Trailers>> trailerCallback;
+    LoaderManager.LoaderCallbacks<Cursor> checkFavoriteCallback;
+
+    boolean isFavourite = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,12 +93,72 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
         ViewCompat.setNestedScrollingEnabled(trailersRecycler, false);
         trailersRecycler.setHasFixedSize(true);
         setData();
-
+        initLoaderCallbacks();
+        getSupportLoaderManager().initLoader(CHECK_MOVIE_LOADER_ID, null, checkFavoriteCallback);
         if (NetworkUtils.isInternetConnected(this)) {
-            getSupportLoaderManager().initLoader(TRAILERS_LOADER_ID, null, this);
+            getSupportLoaderManager().initLoader(TRAILERS_LOADER_ID, null, trailerCallback);
         } else {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void initLoaderCallbacks(){
+        trailerCallback  = new LoaderManager.LoaderCallbacks<ArrayList<Trailers>>() {
+            @Override
+            public Loader<ArrayList<Trailers>> onCreateLoader(int id, Bundle args) {
+                if (NetworkUtils.isInternetConnected(MovieDetailActivity.this)) {
+                    Uri builtUri = Uri.parse(Constants.BASE_URL)
+                            .buildUpon()
+                            .appendPath(String.valueOf(movieDetail.getId()))
+                            .appendEncodedPath(String.valueOf(Constants.TRAILER_PATH))
+                            .appendQueryParameter(getString(R.string.api_key), Constants.API_KEY)
+                            .build();
+                    return new GetTrailerLoader(MovieDetailActivity.this, builtUri.toString());
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void onLoadFinished(Loader<ArrayList<Trailers>> loader, ArrayList<Trailers> data) {
+                // check for internet connection as I do not want the data to be removed
+                // when screen is rotated and the loader is called again
+                if (NetworkUtils.isInternetConnected(MovieDetailActivity.this)) {
+                    if (data != null) {
+                        trailerList.clear();
+                        trailerList.addAll(data);
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(MovieDetailActivity.this, getString(R.string.trailer_error_message), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<ArrayList<Trailers>> loader) {
+
+            }
+        };
+
+        checkFavoriteCallback  = new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+                return new GetFavouritesLoader(MovieDetailActivity.this, String.valueOf(movieDetail.getId()));
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+                if(data.getCount() >  0)
+                    favouritesIcon.setImageResource(R.drawable.ic_favorite_filled);
+                else
+                    favouritesIcon.setImageResource(R.drawable.ic_favorite_empty);
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+
+            }
+        };
     }
 
     private void setData() {
@@ -91,7 +166,7 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
         adapter = new TrailerAdapter(trailerList, this);
         trailersRecycler.addItemDecoration(new ItemDecorationVertical(getResources().getInteger(R.integer.vertical_item_spacing)));
         trailersRecycler.setAdapter(adapter);
-        movieDetail = (Movies) getIntent().getSerializableExtra("detail");
+        movieDetail = getIntent().getParcelableExtra("detail");
         movieTitle.setText(movieDetail.getMovieName());
         averageVote.setText(getString(R.string.average_vote, String.valueOf(movieDetail.getVoteAverage())));
 
@@ -116,42 +191,6 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
     }
 
     @Override
-    public Loader<ArrayList<Trailers>> onCreateLoader(int id, Bundle args) {
-        if (NetworkUtils.isInternetConnected(this)) {
-            Uri builtUri = Uri.parse(Constants.BASE_URL)
-                    .buildUpon()
-                    .appendPath(String.valueOf(movieDetail.getId()))
-                    .appendEncodedPath(String.valueOf(Constants.TRAILER_PATH))
-                    .appendQueryParameter(getString(R.string.api_key), getString(R.string.api_key_value))
-                    .build();
-            return new GetTrailerLoader(this, builtUri.toString());
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader<ArrayList<Trailers>> loader, ArrayList<Trailers> data) {
-        Log.v("TRAILER SIZE", "" + data.size());
-        // check for internet connection as I do not want the data to be removed
-        // when screen is rotated and the loader is called again
-        if (NetworkUtils.isInternetConnected(this)) {
-            if (data != null) {
-                trailerList.clear();
-                trailerList.addAll(data);
-                adapter.notifyDataSetChanged();
-            } else {
-                Toast.makeText(this, getString(R.string.trailer_error_message), Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<ArrayList<Trailers>> loader) {
-
-    }
-
-    @Override
     public void onClick(int position) {
         Uri builtUri = Uri.parse(Constants.YOUTUBE_URL)
                 .buildUpon()
@@ -165,9 +204,30 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onClick(View view) {
-        if (movieDetail.isFavourite()) {
-            favouritesIcon.setImageResource(R.drawable.ic_favourite_empty);
+        favoritesAction();
+    }
+
+    private void favoritesAction(){
+        if (isFavourite) {
+            // Build appropriate uri with String row id appended to delete
+            String stringId = Integer.toString(movieDetail.getId());
+            Uri uri = FavoritesContract.FavoritesEntry.CONTENT_URI;
+            uri = uri.buildUpon().appendPath(stringId).build();
+            getContentResolver().delete(uri, null, null);
+            favouritesIcon.setImageResource(R.drawable.ic_favorite_empty);
+            isFavourite = false;
         } else {
+//            Adding a new movie to favorites
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(COLUMN_ID, movieDetail.getId());
+            contentValues.put(COLUMN_TITLE, movieDetail.getMovieName());
+            contentValues.put(COLUMN_RELEASE_DATE, movieDetail.getReleaseDate());
+            contentValues.put(COLUMN_RATING, movieDetail.getVoteAverage());
+            contentValues.put(COLUMN_SYNOPSIS, movieDetail.getSynopsis());
+            contentValues.put(COLUMN_POSTER_PATH, movieDetail.getPosterPath());
+
+            // Insert the content values via a ContentResolver
+            getContentResolver().insert(CONTENT_URI, contentValues);
             favouritesIcon.setImageResource(R.drawable.ic_favorite_filled);
         }
     }
