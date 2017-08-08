@@ -148,10 +148,13 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
 
             @Override
             public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-                if(data.getCount() >  0)
+                if(data.getCount() >  0) {
                     favouritesIcon.setImageResource(R.drawable.ic_favorite_filled);
-                else
+                    isFavourite = true;
+                }else {
                     favouritesIcon.setImageResource(R.drawable.ic_favorite_empty);
+                    isFavourite = false;
+                }
             }
 
             @Override
@@ -190,6 +193,9 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
         return "";
     }
 
+    /*
+    * This function is called when a trailer is clicked
+    * */
     @Override
     public void onClick(int position) {
         Uri builtUri = Uri.parse(Constants.YOUTUBE_URL)
@@ -202,6 +208,9 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
 
     }
 
+    /*
+    * This function is called when the favorites icon is clicked
+    * */
     @Override
     public void onClick(View view) {
         favoritesAction();

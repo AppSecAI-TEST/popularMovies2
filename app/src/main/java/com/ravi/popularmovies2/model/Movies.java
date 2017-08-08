@@ -28,7 +28,7 @@ public class Movies implements Parcelable {
         parcel.writeFloat(voteAverage);
         parcel.writeString(movieName);
         parcel.writeString(releaseDate);
-        parcel.writeString(Constants.IMAGE_BASE_URL + posterPath);
+        parcel.writeString(posterPath);
         parcel.writeString(synopsis);
     }
 
@@ -104,7 +104,7 @@ public class Movies implements Parcelable {
     }
 
     public void setPosterPath(String posterPath) {
-        this.posterPath = posterPath;
+        this.posterPath = Constants.IMAGE_BASE_URL + posterPath;
     }
 
     public void setSynopsis(String synopsis) {

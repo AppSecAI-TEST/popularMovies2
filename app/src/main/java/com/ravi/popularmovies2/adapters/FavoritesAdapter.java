@@ -24,14 +24,8 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     // Inner class for creating ViewHolders
     class FavoritesViewHolder extends RecyclerView.ViewHolder {
 
-        // Class variables for the task description and priority TextViews
         ImageView posterImage;
 
-        /**
-         * Constructor for the TaskViewHolders.
-         *
-         * @param itemView The view inflated in onCreateViewHolder
-         */
         FavoritesViewHolder(View itemView) {
             super(itemView);
 
@@ -41,8 +35,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     @Override
     public FavoritesViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-        // Inflate the task_layout to a view
         View view = LayoutInflater.from(mContext)
                 .inflate(R.layout.grid_item, parent, false);
 
@@ -69,7 +61,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     public Cursor swapCursor(Cursor c) {
         // check if this cursor is the same as the previous cursor (mCursor)
         if (mCursor == c) {
-            return null; // bc nothing has changed
+            return null; // nothing has changed
         }
         Cursor temp = mCursor;
         this.mCursor = c; // new cursor value assigned

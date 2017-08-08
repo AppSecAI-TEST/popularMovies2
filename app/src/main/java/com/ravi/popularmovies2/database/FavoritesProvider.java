@@ -32,7 +32,7 @@ public class FavoritesProvider extends ContentProvider {
         /*
           All paths added to the UriMatcher have a corresponding int.
           For each kind of uri you may want to access, add the corresponding match with addURI.
-          The two calls below add matches for the task directory and a single item by ID.
+          The two calls below add matches for the FAVORITES directory and a single item by ID.
          */
         uriMatcher.addURI(FavoritesContract.AUTHORITY, FavoritesContract.PATH_FAVORITES, FAVORITES);
         uriMatcher.addURI(FavoritesContract.AUTHORITY, FavoritesContract.PATH_FAVORITES + "/#", FAVORITE_WITH_ID);
@@ -51,14 +51,13 @@ public class FavoritesProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection,
                         @Nullable String[] selectionArgs, @Nullable String sortOrder) {
-        // Get access to underlying database (read-only for query)
+
         final SQLiteDatabase db = favoritesHelper.getReadableDatabase();
 
-        // Write URI match code and set a variable to return a Cursor
         int match = sUriMatcher.match(uri);
         Cursor retCursor;
 
-        // Query for the tasks directory and write a default case
+        // Query for the favorites directory and write a default case
         switch (match) {
             // Query for the tasks directory
             case FAVORITES:

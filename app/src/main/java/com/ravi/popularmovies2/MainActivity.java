@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
             @Override
             public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
                 progressBar.setVisibility(View.GONE);
-                if (data == null) {
+                if (data == null || data.getCount() <= 0) {
                     Toast.makeText(MainActivity.this, getString(R.string.no_favorites), Toast.LENGTH_SHORT).show();
                 } else {
                     if (mAdapter == null) { // if adapter for favorites was not created before
@@ -155,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
 
             @Override
             public void onLoaderReset(Loader<Cursor> loader) {
-                mAdapter.swapCursor(null);
             }
         };
     }
