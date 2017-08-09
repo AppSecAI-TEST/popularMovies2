@@ -24,7 +24,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         final String CREATE_TABLE = "CREATE TABLE "  + FavoritesEntry.TABLE_NAME + " (" +
                 FavoritesEntry._ID                + " INTEGER PRIMARY KEY, " +
-                FavoritesEntry.COLUMN_ID + " INTEGER NOT NULL, " +
+                FavoritesEntry.COLUMN_ID + " INTEGER UNIQUE NOT NULL, " +
                 FavoritesEntry.COLUMN_TITLE    + " TEXT NOT NULL, " +
                 FavoritesEntry.COLUMN_RELEASE_DATE + " TEXT NOT NULL, " +
                 FavoritesEntry.COLUMN_RATING + " DECIMAL NOT NULL, " +

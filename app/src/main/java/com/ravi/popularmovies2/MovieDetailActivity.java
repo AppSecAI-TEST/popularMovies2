@@ -76,7 +76,8 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if(getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         TextView title = (TextView) findViewById(R.id.tv_toolbar_title);
         title.setText(getString(R.string.app_name));
@@ -234,10 +235,15 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
             contentValues.put(COLUMN_RATING, movieDetail.getVoteAverage());
             contentValues.put(COLUMN_SYNOPSIS, movieDetail.getSynopsis());
             contentValues.put(COLUMN_POSTER_PATH, movieDetail.getPosterPath());
-
-            // Insert the content values via a ContentResolver
-            getContentResolver().insert(CONTENT_URI, contentValues);
-            favouritesIcon.setImageResource(R.drawable.ic_favorite_filled);
+            try{
+                // Insert the content values via a ContentResolver
+                getContentResolver().insert(CONTENT_URI, contentValues);
+                favouritesIcon.setImageResource(R.drawable.ic_favorite_filled);
+                isFavourite = true;
+            }catch (Exception ex){
+                ex.printStackTrace();
+                Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

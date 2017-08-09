@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,6 +24,7 @@ import com.ravi.popularmovies2.adapters.MovieAdapter;
 import com.ravi.popularmovies2.model.Movies;
 import com.ravi.popularmovies2.utils.Constants;
 import com.ravi.popularmovies2.utils.ItemDecorationGrid;
+import com.ravi.popularmovies2.utils.JsonKeys;
 import com.ravi.popularmovies2.utils.NetworkUtils;
 import com.ravi.popularmovies2.utils.OnItemClickHandler;
 
@@ -40,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
     FavoritesAdapter mAdapter;
 
     ArrayList<Movies> movieList;
-    boolean isCursorLoaded = false;
+    static boolean isCursorLoaded = false;
 
     private LoaderManager.LoaderCallbacks<ArrayList<Movies>> moviesLoaderResultCallback;
     private LoaderManager.LoaderCallbacks<Cursor> favoritesLoaderResultCallback;
@@ -52,7 +54,8 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         TextView title = (TextView) findViewById(R.id.tv_toolbar_title);
         title.setText(getString(R.string.app_name));
@@ -68,20 +71,26 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
                 getResources().getDimensionPixelSize(R.dimen.grid_spacing), false));
 
         movieList = new ArrayList<>();
-
-        if (savedInstanceState != null && savedInstanceState.containsKey("movies")) {
-            movieList =  savedInstanceState.getParcelableArrayList("movies");
-        }
-        adapter = new MovieAdapter(movieList, this);
-        movieRecycler.setAdapter(adapter);
-
         url = Constants.POPULAR_URL;
         initCallbacks();
-        if (NetworkUtils.isInternetConnected(this))
-            getSupportLoaderManager().initLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
-        else
-            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
 
+        if (!isCursorLoaded) {
+            if (savedInstanceState != null) {
+                if (savedInstanceState.containsKey(JsonKeys.MOVIES_INSTANCE_KEY)) {
+                    movieList = savedInstanceState.getParcelableArrayList(JsonKeys.MOVIES_INSTANCE_KEY);
+                    Log.v("LOADING OLD DATA", "" + movieList.size());
+                }
+            } else { // load data if there is no saved instance state
+                if (NetworkUtils.isInternetConnected(this))
+                    initNetworkCall(MOVIES_LOADER_ID);
+                else
+                    Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+            }
+            adapter = new MovieAdapter(movieList, this);
+            movieRecycler.setAdapter(adapter);
+        } else {
+            initNetworkCall(FAVORITES_LOADER_ID);
+        }
     }
 
     private void initCallbacks() {
@@ -89,9 +98,10 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
             @Override
             public Loader<ArrayList<Movies>> onCreateLoader(int id, Bundle args) {
                 // if the cursor adapter has been set, change the adapter to arrayList adapter
-                if(isCursorLoaded) {
+                if (isCursorLoaded) {
                     movieRecycler.setAdapter(adapter);
                     mAdapter.swapCursor(null);
+                    isCursorLoaded = false; // change the flag to say that cursor adapter is no more set
                 }
                 progressBar.setVisibility(View.VISIBLE);
                 if (NetworkUtils.isInternetConnected(MainActivity.this)) {
@@ -143,13 +153,13 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
                         mAdapter = new FavoritesAdapter(MainActivity.this);
                         movieRecycler.setAdapter(mAdapter);
                         mAdapter.swapCursor(data);
-                    } else{
+                    } else {
                         // if adapter for favorites was created before change the adapter
                         // to the cursorAdapter
                         movieRecycler.setAdapter(mAdapter);
                         mAdapter.swapCursor(data);
                     }
-                    isCursorLoaded = true;
+                    isCursorLoaded = true; // set to say that cursor adapter is loaded
                 }
             }
 
@@ -165,12 +175,15 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
      */
     private void invalidateData() {
         movieList.clear();
-        adapter.notifyDataSetChanged();
+        if (adapter != null)
+            adapter.notifyDataSetChanged();
+        else
+            adapter = new MovieAdapter(movieList, MainActivity.this);
     }
 
     /**
      * This function is called when a grid item is clicked
-     * */
+     */
     @Override
     public void onClick(int position) {
         startActivity(new Intent(MainActivity.this, MovieDetailActivity.class).putExtra("detail", movieList.get(position)));
@@ -179,9 +192,8 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // save instance only if the app is showing popular/top-rated list
-        if(!isCursorLoaded){
-            outState.putSerializable("movies", movieList);
-        }
+        if (!isCursorLoaded)
+            outState.putParcelableArrayList(JsonKeys.MOVIES_INSTANCE_KEY, movieList);
         super.onSaveInstanceState(outState);
     }
 
@@ -195,15 +207,16 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        invalidateData();
         switch (id) {
             case R.id.action_popular:
                 url = Constants.POPULAR_URL;
+                invalidateData();
                 initNetworkCall(MOVIES_LOADER_ID);
                 break;
 
             case R.id.action_topRated:
                 url = Constants.TOP_RATED_URL;
+                invalidateData();
                 initNetworkCall(MOVIES_LOADER_ID);
                 break;
 
@@ -220,10 +233,17 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
 
     private void initNetworkCall(int id) {
         if (NetworkUtils.isInternetConnected(this)) {
-            if (id == MOVIES_LOADER_ID)
-                getSupportLoaderManager().restartLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
-            else
-                getSupportLoaderManager().restartLoader(FAVORITES_LOADER_ID, null, favoritesLoaderResultCallback);
+            if (getSupportLoaderManager().getLoader(id) == null) {
+                if (id == MOVIES_LOADER_ID)
+                    getSupportLoaderManager().initLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
+                else
+                    getSupportLoaderManager().initLoader(FAVORITES_LOADER_ID, null, favoritesLoaderResultCallback);
+            } else {
+                if (id == MOVIES_LOADER_ID)
+                    getSupportLoaderManager().restartLoader(MOVIES_LOADER_ID, null, moviesLoaderResultCallback);
+                else
+                    getSupportLoaderManager().restartLoader(FAVORITES_LOADER_ID, null, favoritesLoaderResultCallback);
+            }
         } else {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
         }

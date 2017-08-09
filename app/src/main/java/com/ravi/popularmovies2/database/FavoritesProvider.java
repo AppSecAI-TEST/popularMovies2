@@ -97,11 +97,11 @@ public class FavoritesProvider extends ContentProvider {
         switch (match) {
             case FAVORITES:
                 // Inserting values into favorites table
-                long id = db.insert(TABLE_NAME, null, contentValues);
+                long id = db.insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
                 if (id > 0) {
                     returnUri = ContentUris.withAppendedId(CONTENT_URI, id);
                 } else {
-                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                    throw new android.database.SQLException("The movie already exists in your favorites");
                 }
                 break;
             default:

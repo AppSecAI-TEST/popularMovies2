@@ -18,4 +18,6 @@ public class JsonKeys {
 
     public static final String CONTENT_KEY = "content";
     public static final String AUTHOR_KEY = "author";
+    public static final String MOVIES_INSTANCE_KEY = "movies";
+    public static final String FAVORITES_INSTANCE_KEY = "favorites";
 }
