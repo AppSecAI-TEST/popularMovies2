@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="@android:color/white"
     android:orientation="horizontal"
-    android:padding="10dp">
+    android:padding="@dimen/dimen10">
 
     <android.support.v7.widget.AppCompatImageView
         android:layout_width="@dimen/video_icon"
@@ -18,10 +18,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginLeft="20dp"
-        android:layout_marginStart="20dp"
+        android:layout_marginLeft="@dimen/dimen20"
+        android:layout_marginStart="@dimen/dimen20"
         android:textColor="@color/colorSecondary_text"
-        android:textSize="15sp"
+        android:textSize="@dimen/text15"
         tools:text="Trailer 1" />
 
 </LinearLayout>
