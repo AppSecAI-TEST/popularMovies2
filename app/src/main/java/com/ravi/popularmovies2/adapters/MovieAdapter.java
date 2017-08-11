@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.ravi.popularmovies2.R;
 import com.ravi.popularmovies2.model.Movies;
+import com.ravi.popularmovies2.utils.Constants;
 import com.ravi.popularmovies2.utils.OnItemClickHandler;
 
 import java.util.ArrayList;
@@ -61,14 +62,14 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     public void onBindViewHolder(MovieViewHolder holder, final int position) {
         final int adapterPosition = holder.getAdapterPosition();
         Movies currentItem = movieList.get(position);
-        Glide.with(holder.context).load(currentItem.getPosterPath())
+        Glide.with(holder.context).load(Constants.IMAGE_BASE_URL + currentItem.getPosterPath())
                 .placeholder(R.drawable.ic_movie_placeholder)
                 .error(R.drawable.ic_movie_placeholder)
                 .into(holder.moviePoster);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mClickHandler.onClick(adapterPosition);
+                mClickHandler.onClick(adapterPosition, null);
             }
         });
     }

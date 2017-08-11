@@ -11,14 +11,18 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.ravi.popularmovies2.R;
 import com.ravi.popularmovies2.database.FavoritesContract;
+import com.ravi.popularmovies2.utils.Constants;
+import com.ravi.popularmovies2.utils.OnItemClickHandler;
 
 public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoritesViewHolder> {
 
     private Cursor mCursor;
     private Context mContext;
+    private OnItemClickHandler callback;
 
-    public FavoritesAdapter(Context mContext) {
+    public FavoritesAdapter(Context mContext, OnItemClickHandler callback) {
         this.mContext = mContext;
+        this.callback = callback;
     }
 
     // Inner class for creating ViewHolders
@@ -43,11 +47,17 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     @Override
     public void onBindViewHolder(FavoritesAdapter.FavoritesViewHolder holder, int position) {
-
+        final int adapterPosition = position;
         mCursor.moveToPosition(position);
         Glide.with(mContext).
-                load(mCursor.getString(mCursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH))).
+                load(Constants.IMAGE_BASE_URL + mCursor.getString(mCursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH))).
                 into(holder.posterImage);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callback.onClick(adapterPosition, mCursor);
+            }
+        });
     }
 
     @Override

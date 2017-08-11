@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -177,7 +178,8 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
         releaseYear.setText(getYearOfRelease());
         summary.setText(movieDetail.getSynopsis());
         favouritesIcon.setOnClickListener(this);
-        Glide.with(this).load(movieDetail.getPosterPath())
+        Log.v("Path", movieDetail.getPosterPath());
+        Glide.with(this).load(Constants.IMAGE_BASE_URL + movieDetail.getPosterPath())
                 .placeholder(R.drawable.ic_movie_placeholder)
                 .error(R.drawable.ic_movie_placeholder)
                 .into(poster);
@@ -198,7 +200,7 @@ public class MovieDetailActivity extends AppCompatActivity implements View.OnCli
     * This function is called when a trailer is clicked
     * */
     @Override
-    public void onClick(int position) {
+    public void onClick(int position, Cursor cursor) {
         Uri builtUri = Uri.parse(Constants.YOUTUBE_URL)
                 .buildUpon()
                 .appendQueryParameter("v", trailerList.get(position).getKey())

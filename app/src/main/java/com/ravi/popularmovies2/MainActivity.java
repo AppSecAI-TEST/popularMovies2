@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,6 +20,7 @@ import android.widget.Toast;
 
 import com.ravi.popularmovies2.adapters.FavoritesAdapter;
 import com.ravi.popularmovies2.adapters.MovieAdapter;
+import com.ravi.popularmovies2.database.FavoritesContract;
 import com.ravi.popularmovies2.model.Movies;
 import com.ravi.popularmovies2.utils.Constants;
 import com.ravi.popularmovies2.utils.ItemDecorationGrid;
@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
             if (savedInstanceState != null) {
                 if (savedInstanceState.containsKey(JsonKeys.MOVIES_INSTANCE_KEY)) {
                     movieList = savedInstanceState.getParcelableArrayList(JsonKeys.MOVIES_INSTANCE_KEY);
-                    Log.v("LOADING OLD DATA", "" + movieList.size());
                 }
             } else { // load data if there is no saved instance state
                 if (NetworkUtils.isInternetConnected(this))
@@ -91,6 +90,14 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
         } else {
             initNetworkCall(FAVORITES_LOADER_ID);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(isCursorLoaded)
+            initNetworkCall(FAVORITES_LOADER_ID);
     }
 
     private void initCallbacks() {
@@ -150,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
                     Toast.makeText(MainActivity.this, getString(R.string.no_favorites), Toast.LENGTH_SHORT).show();
                 } else {
                     if (mAdapter == null) { // if adapter for favorites was not created before
-                        mAdapter = new FavoritesAdapter(MainActivity.this);
+                        mAdapter = new FavoritesAdapter(MainActivity.this, MainActivity.this);
                         movieRecycler.setAdapter(mAdapter);
                         mAdapter.swapCursor(data);
                     } else {
@@ -185,8 +192,22 @@ public class MainActivity extends AppCompatActivity implements OnItemClickHandle
      * This function is called when a grid item is clicked
      */
     @Override
-    public void onClick(int position) {
-        startActivity(new Intent(MainActivity.this, MovieDetailActivity.class).putExtra("detail", movieList.get(position)));
+    public void onClick(int position, Cursor cursor) {
+        Intent intent = new Intent(this, MovieDetailActivity.class);
+        if (cursor == null)
+            intent.putExtra("detail", movieList.get(position));
+        else {
+            Movies movieDetail = new Movies();
+            cursor.moveToPosition(position);
+            movieDetail.setId(cursor.getInt(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_ID)));
+            movieDetail.setPosterPath(cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH)));
+            movieDetail.setMovieName(cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_TITLE)));
+            movieDetail.setReleaseDate(cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_RELEASE_DATE)));
+            movieDetail.setSynopsis(cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_SYNOPSIS)));
+            movieDetail.setVoteAverage(cursor.getFloat(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_RATING)));
+            intent.putExtra("detail", movieDetail);
+        }
+        startActivity(intent);
     }
 
     @Override

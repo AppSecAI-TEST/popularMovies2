@@ -104,7 +104,7 @@ public class Movies implements Parcelable {
     }
 
     public void setPosterPath(String posterPath) {
-        this.posterPath = Constants.IMAGE_BASE_URL + posterPath;
+        this.posterPath = posterPath;
     }
 
     public void setSynopsis(String synopsis) {
