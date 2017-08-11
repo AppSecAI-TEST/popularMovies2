@@ -7,5 +7,7 @@ The app provides the following functions:
 3. Restores instance state for the popular and top-rated movies when the device is rotated.
 4. User can view trailers in the movie details screen.
 5. User can view reviews for that movie in the movie details screen by clicking on the options menu on the top right.
+6. User can click on favorites item and view the movie details.
+7. Favorites refresh when resumed.
 
 NOTE: To run the app you will need to get an API KEY from https://www.themoviedb.org and replace it in the code.
